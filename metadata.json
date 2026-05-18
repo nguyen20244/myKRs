@@ -1,0 +1,8 @@
+{
+  "name": "HanVina AI - Korean Learning OS",
+  "description": "Hệ điều hành học tiếng Hàn thông minh cho người Việt, tích hợp AI Gemini để tạo ngữ cảnh, phân tích từ vựng và ngữ pháp chuyên sâu.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
