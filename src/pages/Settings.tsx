@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { Database, Key, AlertCircle, CheckCircle2, X } from 'lucide-react';
+import { Database, Key, ChevronDown } from 'lucide-react';
 import { ApiConfig } from '../types/api.types';
-import { useVocabulary } from '../hooks/useVocabulary';
 import { cn } from '../lib/utils';
 
 interface SettingsProps {
@@ -13,10 +12,17 @@ interface SettingsProps {
   onResetDB: () => void;
 }
 
-export const Settings: React.FC<SettingsProps> = ({ 
-  apiConfig, 
-  setApiConfig, 
-  vocabDBLength, 
+const GEMINI_MODELS = [
+  'gemini-2.0-flash',
+  'gemini-2.0-flash-lite',
+  'gemini-1.5-flash',
+  'gemini-1.5-pro',
+];
+
+export const Settings: React.FC<SettingsProps> = ({
+  apiConfig,
+  setApiConfig,
+  vocabDBLength,
   grammarCount,
   onBulkImport,
   onResetDB
@@ -26,8 +32,12 @@ export const Settings: React.FC<SettingsProps> = ({
 
   const saveKeys = () => {
     const keys = keyInput.split('\n').map(k => k.trim()).filter(Boolean);
+    if (keys.length === 0) {
+      alert("Vui lòng nhập ít nhất một API key hợp lệ.");
+      return;
+    }
     setApiConfig({ ...apiConfig, keys });
-    alert("Đã lưu API Keys mới.");
+    alert(`Đã lưu ${keys.length} API key.`);
   };
 
   return (
@@ -47,23 +57,44 @@ export const Settings: React.FC<SettingsProps> = ({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-[10px] text-slate-500 uppercase font-bold mb-2 block tracking-widest">Model</label>
-              <input 
+              <div className="relative">
+                <select
+                  value={GEMINI_MODELS.includes(apiConfig.model) ? apiConfig.model : 'custom'}
+                  onChange={e => {
+                    if (e.target.value !== 'custom') setApiConfig({ ...apiConfig, model: e.target.value });
+                  }}
+                  className="w-full bg-brand-bg border border-brand-border-input rounded-xl p-3 text-sm focus:border-brand-accent outline-none text-white font-mono appearance-none pr-8"
+                >
+                  {GEMINI_MODELS.map(m => <option key={m} value={m}>{m}</option>)}
+                  {!GEMINI_MODELS.includes(apiConfig.model) && (
+                    <option value="custom">{apiConfig.model} (custom)</option>
+                  )}
+                </select>
+                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+              </div>
+            </div>
+            <div>
+              <label className="text-[10px] text-slate-500 uppercase font-bold mb-2 block tracking-widest">Model tùy chỉnh</label>
+              <input
                 value={apiConfig.model}
-                onChange={e => setApiConfig({...apiConfig, model: e.target.value})}
+                onChange={e => setApiConfig({ ...apiConfig, model: e.target.value })}
                 className="w-full bg-brand-bg border border-brand-border-input rounded-xl p-3 text-sm focus:border-brand-accent outline-none text-white font-mono"
+                placeholder="gemini-2.0-flash"
               />
             </div>
           </div>
 
           <div>
-            <label className="text-[10px] text-slate-500 uppercase font-bold mb-2 block tracking-widest">API Keys (Mỗi dòng 1 key)</label>
-            <textarea 
+            <label className="text-[10px] text-slate-500 uppercase font-bold mb-2 block tracking-widest">
+              API Keys <span className="text-slate-600 normal-case">(Mỗi dòng 1 key — sẽ xoay vòng khi lỗi)</span>
+            </label>
+            <textarea
               value={keyInput}
               onChange={e => setKeyInput(e.target.value)}
-              placeholder="Dán các API keys..."
+              placeholder="Dán các API keys vào đây..."
               className="w-full h-32 bg-brand-bg border border-brand-border-input rounded-xl p-4 text-xs font-mono focus:border-brand-accent outline-none text-slate-300 resize-none"
             />
-            <button 
+            <button
               onClick={saveKeys}
               className="w-full mt-4 py-3 bg-brand-accent hover:bg-brand-accent-deep text-white font-bold rounded-xl text-xs transition-all uppercase tracking-widest"
             >
@@ -86,15 +117,19 @@ export const Settings: React.FC<SettingsProps> = ({
 
         <div className="space-y-6">
           <div>
-            <label className="text-[10px] text-slate-500 uppercase font-bold mb-2 block tracking-widest">Nhập từ vựng hàng loạt (TAB)</label>
-            <textarea 
+            <label className="text-[10px] text-slate-500 uppercase font-bold mb-2 block tracking-widest">
+              Nhập từ vựng hàng loạt <span className="normal-case text-slate-600">(cột phân cách bằng TAB)</span>
+            </label>
+            <p className="text-[10px] text-slate-600 mb-2 font-mono">Từ ⇥ Phát âm ⇥ Loại từ ⇥ Nghĩa Việt ⇥ Định nghĩa Hàn ⇥ Giải thích Việt</p>
+            <textarea
               value={bulkInput}
               onChange={e => setBulkInput(e.target.value)}
-              placeholder="Từ <tab> Phát âm <tab> Loại từ <tab> Nghĩa..."
+              placeholder={"가다\t[가다]\t동사\tđi\t이동하다\tĐộng từ chỉ sự di chuyển"}
               className="w-full h-32 bg-brand-bg border border-brand-border-input rounded-xl p-4 text-xs focus:border-brand-accent outline-none text-slate-300 font-mono"
             />
-            <button 
+            <button
               onClick={() => {
+                if (!bulkInput.trim()) { alert("Không có dữ liệu để nhập."); return; }
                 onBulkImport(bulkInput);
                 setBulkInput('');
                 alert("Đã nhập dữ liệu thành công!");
@@ -105,9 +140,9 @@ export const Settings: React.FC<SettingsProps> = ({
             </button>
           </div>
 
-          <button 
+          <button
             onClick={() => {
-              if (confirm("Reset database về mặc định? Mọi thay đổi của bạn sẽ mất.")) {
+              if (confirm("Reset database về mặc định? Mọi từ vựng và API key đã thêm sẽ bị xóa.")) {
                 onResetDB();
                 window.location.reload();
               }
@@ -121,3 +156,5 @@ export const Settings: React.FC<SettingsProps> = ({
     </div>
   );
 };
+
+

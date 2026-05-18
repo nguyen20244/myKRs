@@ -1,7 +1,10 @@
 import { ApiConfig, AIResponse } from "../types/api.types";
 
+// Module-level cache so bad keys persist across instantiations
+const _badKeysCache: Set<string> = new Set();
+
 export class GeminiService {
-  private badKeys: Set<string> = new Set();
+  private badKeys: Set<string> = _badKeysCache;
 
   constructor(private config: ApiConfig) {}
 
@@ -38,8 +41,11 @@ export class GeminiService {
         }
 
         const data = await response.json();
-        const text = data.candidates[0].content.parts[0].text;
-        return JSON.parse(text);
+        const rawText: string = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!rawText) throw new Error("Empty response from Gemini API");
+        // Strip markdown code fences if present
+        const cleanText = rawText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim();
+        return JSON.parse(cleanText);
       } catch (err) {
         console.error("Fetch error or Parse error:", err);
         this.badKeys.add(key);

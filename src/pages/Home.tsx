@@ -44,6 +44,10 @@ export const Home: React.FC<HomeProps> = ({
       alert("Vui lòng thiết lập API Key trong cài đặt.");
       return;
     }
+    if (!inputWords.trim()) {
+      alert("Vui lòng nhập ít nhất một từ vựng trước khi tạo bài học.");
+      return;
+    }
 
     setIsLoading(true);
     const gemini = new GeminiService(apiConfig);
@@ -87,6 +91,8 @@ Bắt buộc trả về JSON hợp lệ.`;
       setShowAiTranslation(false);
     } catch (err) {
       console.error(err);
+      const message = err instanceof Error ? err.message : "Lỗi không xác định";
+      console.warn(`[GeminiService] Thất bại: ${message}. Chuyển sang chế độ Offline.`);
       handleGenerateOffline();
     } finally {
       setIsLoading(false);

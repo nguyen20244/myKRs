@@ -1,4 +1,5 @@
-import { AIWordAnalysis, AIGrammarAnalysis } from "./vocab.types";
+import { AIWordAnalysis } from "./vocab.types";
+import { AIGrammarAnalysis } from "./grammar.types";
 
 export interface ApiConfig {
   keys: string[];
